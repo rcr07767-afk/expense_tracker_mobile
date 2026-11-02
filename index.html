@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#4f46e5" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="My Expenses" />
+  <title>My Expense Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #4338ca;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-light: #64748b;
+      --border: #e2e8f0;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    /* ========== LOCK SCREEN ========== */
+    .lock-screen {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: white;
+    }
+
+    .lock-screen.hidden {
+      display: none;
+    }
+
+    .lock-icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+    }
+
+    .lock-screen h2 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .lock-screen p {
+      opacity: 0.85;
+      margin-bottom: 28px;
+      font-size: 0.95rem;
+    }
+
+    .lock-input {
+      width: 100%;
+      max-width: 280px;
+      padding: 16px;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.3rem;
+      text-align: center;
+      letter-spacing: 8px;
+      margin-bottom: 16px;
+      background: rgba(255,255,255,0.95);
+      color: #1e293b;
+    }
+
+    .lock-input:focus {
+      outline: 3px solid rgba(255,255,255,0.5);
+    }
+
+    .lock-btn {
+      width: 100%;
+      max-width: 280px;
+      padding: 16px;
+      background: white;
+      color: #4f46e5;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 12px;
+    }
+
+    .lock-error {
+      color: #fecaca;
+      font-size: 0.9rem;
+      min-height: 24px;
+      margin-top: 8px;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      padding: 20px 16px 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+    }
+
+    .profile-section {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .profile-pic-wrapper {
+      position: relative;
+      width: 64px;
+      height: 64px;
+      flex-shrink: 0;
+    }
+
+    .profile-pic {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255,255,255,0.8);
+      background: #c7d2fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      overflow: hidden;
+    }
+
+    .profile-pic img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .change-pic-btn {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 26px;
+      height: 26px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      cursor: pointer;
+      border: none;
+    }
+
+    .profile-info h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .profile-info p {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .total-box {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(8px);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .total-box .label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .total-box .amount {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    /* Main content */
+    .container {
+      padding: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Filters */
+    .filters {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .filter-chip {
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-chip.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Expense list */
+    .expense-card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .expense-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: #e0e7ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .expense-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .expense-details .category {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .expense-details .desc {
+      font-size: 0.8rem;
+      color: var(--text-light);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .expense-details .date {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-top: 2px;
+    }
+
+    .expense-amount {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      font-size: 1.1rem;
+      padding: 6px;
+      cursor: pointer;
+      opacity: 0.7;
+    }
+
+    .delete-btn:active {
+      opacity: 1;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 50px 20px;
+      color: var(--text-light);
+    }
+
+    .empty-state .emoji {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    /* Bottom bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      gap: 12px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.06);
+      z-index: 100;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      width: 100%;
+      max-width: 500px;
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 32px;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-header h2 {
+      font-size: 1.25rem;
+    }
+
+    .close-btn {
+      background: #f1f5f9;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--text-light);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #f8fafc;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--primary);
+      background: white;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .cat-btn {
+      padding: 10px 6px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #f8fafc;
+      font-size: 0.8rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .cat-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .save-btn {
+      width: 100%;
+      padding: 16px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+
+    /* Profile edit modal */
+    .profile-preview {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0 auto 16px;
+      display: block;
+      border: 3px solid var(--primary);
+      background: #e0e7ff;
+    }
+
+    /* Summary cards */
+    .summary-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .summary-card .label {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      margin-bottom: 4px;
+    }
+
+    .summary-card .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 0.9rem;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+
+    #picInput, #profilePicInput {
+      display: none;
+    }
+
+    .password-status {
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .password-status.on {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .password-status.off {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+
+    .danger-btn {
+      width: 100%;
+      padding: 14px;
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-top: 12px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========== LOCK SCREEN ========== -->
+  <div class="lock-screen" id="lockScreen">
+    <div class="lock-icon">🔒</div>
+    <h2>App Locked</h2>
+    <p>Enter your password to continue</p>
+    <input type="password" class="lock-input" id="lockPassword" placeholder="••••" maxlength="20" inputmode="numeric" />
+    <button class="lock-btn" onclick="unlockApp()">Unlock</button>
+    <div class="lock-error" id="lockError"></div>
+  </div>
+
+  <!-- Header with Profile -->
+  <div class="header" id="mainApp" style="display:none">
+    <div class="profile-section">
+      <div class="profile-pic-wrapper">
+        <div class="profile-pic" id="profilePicDisplay">
+          <span id="defaultAvatar">👤</span>
+        </div>
+        <button class="change-pic-btn" onclick="document.getElementById('profilePicInput').click()">📷</button>
+        <input type="file" id="profilePicInput" accept="image/*" />
+      </div>
+      <div class="profile-info">
+        <h1 id="userName">My Expenses</h1>
+        <p>Personal Tracker</p>
+      </div>
+    </div>
+
+    <div class="total-box">
+      <div>
+        <div class="label">Total Spent</div>
+        <div class="amount" id="totalAmount">₹0</div>
+      </div>
+      <div style="text-align:right">
+        <div class="label">This Month</div>
+        <div class="amount" style="font-size:1.2rem" id="monthAmount">₹0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="mainContent" style="display:none">
+    <!-- Summary -->
+    <div class="summary-row">
+      <div class="summary-card">
+        <div class="label">Expenses</div>
+        <div class="value" id="expenseCount">0</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">Avg / expense</div>
+        <div class="value" id="avgAmount">₹0</div>
+      </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="filters" id="categoryFilters">
+      <div class="filter-chip active" data-cat="All">All</div>
+    </div>
+
+    <!-- Expense List -->
+    <div id="expenseList"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="emoji">💸</div>
+      <p>No expenses yet.<br>Tap + to add your first one!</p>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="bottom-bar" id="bottomBar" style="display:none">
+    <button class="btn btn-secondary" onclick="openProfileModal()">Edit Profile</button>
+    <button class="btn btn-primary" onclick="openAddModal()">+ Add Expense</button>
+  </div>
+
+  <!-- Add Expense Modal -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Expense</h2>
+        <button class="close-btn" onclick="closeAddModal()">×</button>
+      </div>
+
+      <div class="form-group">
+        <label>Amount (₹)</label>
+        <input type="number" id="amountInput" placeholder="0.00" inputmode="decimal" step="0.01" />
+      </div>
+
+      <div class="form-group">
+        <label>Category</label>
+        <div class="category-grid" id="categoryGrid">
+          <div class="cat-btn active" data-cat="Food">🍔 Food</div>
+          <div class="cat-btn" data-cat="Transport">🚗 Transport</div>
+          <div class="cat-btn" data-cat="Shopping">🛍️ Shopping</div>
+          <div class="cat-btn" data-cat="Bills">💡 Bills</div>
+          <div class="cat-btn" data-cat="Entertainment">🎬 Fun</div>
+          <div class="cat-btn" data-cat="Health">💊 Health</div>
+          <div class="cat-btn" data-cat="Groceries">🛒 Groceries</div>
+          <div class="cat-btn" data-cat="Travel">✈️ Travel</div>
+          <div class="cat-btn" data-cat="Other">📦 Other</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Description (optional)</label>
+        <input type="text" id="descInput" placeholder="What did you spend on?" />
+      </div>
+
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="dateInput" />
+      </div>
+
+      <button class="save-btn" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+
+  <!-- Profile Modal -->
+  <div class="modal-overlay" id="profileModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Edit Profile</h2>
+        <button class="close-btn" onclick="closeProfileModal()">×</button>
+      </div>
+
+      <img id="profilePreview" class="profile-preview" src="" style="display:none" />
+      <div id="profilePreviewPlaceholder" class="profile-preview" style="display:flex;align-items:center;justify-content:center;font-size:2.5rem;color:#6366f1">👤</div>
+
+      <button class="btn btn-secondary" style="width:100%;margin-bottom:16px" onclick="document.getElementById('profilePicInput').click()">
+        Change Photo
+      </button>
+
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="nameInput" placeholder="Enter your name" />
+      </div>
+
+      <hr style="border:none;border-top:1px solid #e2e8f0;margin:20px 0">
+
+      <h3 style="font-size:1.05rem;margin-bottom:12px">🔒 Password Protection</h3>
+
+      <div id="passwordStatus" class="password-status off">
+        🔓 Password is not set
+      </div>
+
+      <div class="form-group">
+        <label>New Password (4-20 characters)</label>
+        <input type="password" id="newPassword" placeholder="Enter new password" maxlength="20" />
+      </div>
+
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input type="password" id="confirmPassword" placeholder="Confirm password" maxlength="20" />
+      </div>
+
+      <button class="save-btn" onclick="saveProfile()">Save Profile</button>
+
+      <button class="danger-btn" id="removePasswordBtn" style="display:none" onclick="removePassword()">
+        Remove Password
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---------- Data ----------
+    let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+    let profile = JSON.parse(localStorage.getItem('profile') || '{"name":"My Expenses","pic":null}');
+    let passwordHash = localStorage.getItem('passwordHash') || null;
+    let selectedCategory = 'Food';
+    let filterCategory = 'All';
+    let isUnlocked = false;
+
+    // ---------- Simple Hash (for password) ----------
+    async function hashPassword(password) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(password + 'expense_salt_2024');
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // ---------- Init ----------
+    async function initApp() {
+      document.getElementById('dateInput').valueAsDate = new Date();
+      
+      if (passwordHash) {
+        // Password is set → show lock screen
+        document.getElementById('lockScreen').classList.remove('hidden');
+        document.getElementById('lockPassword').focus();
+      } else {
+        // No password → go straight to app
+        unlockApp(true);
+      }
+
+      // Enter key on lock screen
+      document.getElementById('lockPassword').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') unlockApp();
+      });
+    }
+
+    async function unlockApp(skipCheck = false) {
+      if (!skipCheck && passwordHash) {
+        const entered = document.getElementById('lockPassword').value;
+        if (!entered) {
+          document.getElementById('lockError').textContent = 'Please enter password';
+          return;
+        }
+        const enteredHash = await hashPassword(entered);
+        if (enteredHash !== passwordHash) {
+          document.getElementById('lockError').textContent = 'Wrong password';
+          document.getElementById('lockPassword').value = '';
+          document.getElementById('lockPassword').focus();
+          return;
+        }
+      }
+
+      isUnlocked = true;
+      document.getElementById('lockScreen').classList.add('hidden');
+      document.getElementById('mainApp').style.display = 'block';
+      document.getElementById('mainContent').style.display = 'block';
+      document.getElementById('bottomBar').style.display = 'flex';
+
+      renderProfile();
+      renderExpenses();
+      setupCategoryButtons();
+      updatePasswordUI();
+    }
+
+    // ---------- Profile Picture ----------
+    document.getElementById('profilePicInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        profile.pic = event.target.result;
+        localStorage.setItem('profile', JSON.stringify(profile));
+        renderProfile();
+        showToast('Photo updated!');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    function renderProfile() {
+      const display = document.getElementById('profilePicDisplay');
+      const preview = document.getElementById('profilePreview');
+      const placeholder = document.getElementById('profilePreviewPlaceholder');
+      const nameEl = document.getElementById('userName');
+
+      nameEl.textContent = profile.name || 'My Expenses';
+      document.getElementById('nameInput').value = profile.name || '';
+
+      if (profile.pic) {
+        display.innerHTML = `<img src="${profile.pic}" alt="Profile">`;
+        preview.src = profile.pic;
+        preview.style.display = 'block';
+        placeholder.style.display = 'none';
+      } else {
+        display.innerHTML = `<span id="defaultAvatar">👤</span>`;
+        preview.style.display = 'none';
+        placeholder.style.display = 'flex';
+      }
+    }
+
+    async function saveProfile() {
+      const name = document.getElementById('nameInput').value.trim();
+      if (name) profile.name = name;
+      localStorage.setItem('profile', JSON.stringify(profile));
+
+      // Handle password
+      const newPass = document.getElementById('newPassword').value;
+      const confirmPass = document.getElementById('confirmPassword').value;
+
+      if (newPass || confirmPass) {
+        if (newPass.length < 4) {
+          showToast('Password must be at least 4 characters');
+          return;
+        }
+        if (newPass !== confirmPass) {
+          showToast('Passwords do not match');
+          return;
+        }
+        passwordHash = await hashPassword(newPass);
+        localStorage.setItem('passwordHash', passwordHash);
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        showToast('Password set successfully!');
+      } else {
+        showToast('Profile saved!');
+      }
+
+      renderProfile();
+      updatePasswordUI();
+      closeProfileModal();
+    }
+
+    async function removePassword() {
+      if (!confirm('Remove password protection?')) return;
+      passwordHash = null;
+      localStorage.removeItem('passwordHash');
+      updatePasswordUI();
+      showToast('Password removed');
+    }
+
+    function updatePasswordUI() {
+      const status = document.getElementById('passwordStatus');
+      const removeBtn = document.getElementById('removePasswordBtn');
+      if (passwordHash) {
+        status.className = 'password-status on';
+        status.innerHTML = '🔒 Password is active';
+        removeBtn.style.display = 'block';
+      } else {
+        status.className = 'password-status off';
+        status.innerHTML = '🔓 Password is not set';
+        removeBtn.style.display = 'none';
+      }
+    }
+
+    // ---------- Categories ----------
+    function setupCategoryButtons() {
+      document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          selectedCategory = btn.dataset.cat;
+        });
+      });
+    }
+
+    // ---------- Expenses ----------
+    function saveExpense() {
+      const amount = parseFloat(document.getElementById('amountInput').value);
+      const desc = document.getElementById('descInput').value.trim();
+      const date = document.getElementById('dateInput').value;
+
+      if (!amount || amount <= 0) {
+        showToast('Please enter a valid amount');
+        return;
+      }
+      if (!date) {
+        showToast('Please select a date');
+        return;
+      }
+
+      const expense = {
+        id: Date.now(),
+        amount: amount,
+        category: selectedCategory,
+        description: desc,
+        date: date
+      };
+
+      expenses.unshift(expense);
+      localStorage.setItem('expenses', JSON.stringify(expenses));
+      
+      closeAddModal();
+      renderExpenses();
+      showToast('Expense added!');
+      
+      // Reset form
+      document.getElementById('amountInput').value = '';
+      document.getElementById('descInput').value = '';
+      document.getElementById('dateInput').valueAsDate = new Date();
+    }
+
+    function deleteExpense(id) {
+      if (!confirm('Delete this expense?')) return;
+      expenses = expenses.filter(e => e.id !== id);
+      localStorage.setItem('expenses', JSON.stringify(expenses));
+      renderExpenses();
+      showToast('Expense deleted');
+    }
+
+    function renderExpenses() {
+      const list = document.getElementById('expenseList');
+      const empty = document.getElementById('emptyState');
+      
+      // Update filters
+      updateCategoryFilters();
+
+      let filtered = expenses;
+      if (filterCategory !== 'All') {
+        filtered = expenses.filter(e => e.category === filterCategory);
+      }
+
+      // Totals
+      const total = filtered.reduce((sum, e) => sum + e.amount, 0);
+      const now = new Date();
+      const thisMonth = filtered.filter(e => {
+        const d = new Date(e.date);
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      });
+      const monthTotal = thisMonth.reduce((sum, e) => sum + e.amount, 0);
+      const avg = filtered.length ? total / filtered.length : 0;
+
+      document.getElementById('totalAmount').textContent = '₹' + total.toLocaleString('en-IN', {maximumFractionDigits: 0});
+      document.getElementById('monthAmount').textContent = '₹' + monthTotal.toLocaleString('en-IN', {maximumFractionDigits: 0});
+      document.getElementById('expenseCount').textContent = filtered.length;
+      document.getElementById('avgAmount').textContent = '₹' + Math.round(avg).toLocaleString('en-IN');
+
+      if (filtered.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      const icons = {
+        'Food': '🍔', 'Transport': '🚗', 'Shopping': '🛍️', 'Bills': '💡',
+        'Entertainment': '🎬', 'Health': '💊', 'Groceries': '🛒', 'Travel': '✈️', 'Other': '📦'
+      };
+
+      list.innerHTML = filtered.map(e => `
+        <div class="expense-card">
+          <div class="expense-icon">${icons[e.category] || '📦'}</div>
+          <div class="expense-details">
+            <div class="category">${e.category}</div>
+            <div class="desc">${e.description || '—'}</div>
+            <div class="date">${formatDate(e.date)}</div>
+          </div>
+          <div class="expense-amount">₹${e.amount.toLocaleString('en-IN')}</div>
+          <button class="delete-btn" onclick="deleteExpense(${e.id})">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    function updateCategoryFilters() {
+      const cats = ['All', ...new Set(expenses.map(e => e.category))];
+      const container = document.getElementById('categoryFilters');
+      container.innerHTML = cats.map(cat => 
+        `<div class="filter-chip ${filterCategory === cat ? 'active' : ''}" data-cat="${cat}" onclick="setFilter('${cat}')">${cat}</div>`
+      ).join('');
+    }
+
+    function setFilter(cat) {
+      filterCategory = cat;
+      renderExpenses();
+    }
+
+    function formatDate(dateStr) {
+      const d = new Date(dateStr);
+      const options = { day: 'numeric', month: 'short', year: 'numeric' };
+      return d.toLocaleDateString('en-IN', options);
+    }
+
+    // ---------- Modals ----------
+    function openAddModal() {
+      document.getElementById('addModal').classList.add('show');
+    }
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('show');
+    }
+    function openProfileModal() {
+      document.getElementById('profileModal').classList.add('show');
+      updatePasswordUI();
+    }
+    function closeProfileModal() {
+      document.getElementById('profileModal').classList.remove('show');
+    }
+
+    // Close modal on overlay click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('show');
+        }
+      });
+    });
+
+    // ---------- Toast ----------
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // ---------- PWA Install ----------
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+
+    // Start the app
+    initApp();
+  </script>
+</body>
+</html>
